@@ -1,0 +1,26 @@
+#+TITLE: Anki Romaji Remover
+Automatically turn Romaji into Hiragana in an Anki deck.
+
+This is for if you get bothered by Romaji's inaccuracy, or in my opinion, its somewhat misleading format.
+
+This tool takes the name of a deck and the name of the field with Romaji, and converts it into Hiragana.
+
+Some notes:
+- It preserves most anything which isn't romaji, so if you have e.g. "setsumei(suru)" it will convert it to "せつめい(する)"
+- "-" will be removed, however. This is because the romkan converter can get confused by these
+- It doesn't hurt to run the script again on a deck which has already been wholly or partially converted
+
+Issues:
+- [ ] English initialisms, e.g. URL, should output to Katakana, but do not
+- [ ] For my deck, katakana output can differ in regards to continuations: from input "booringu" the converter outputs ボオリング instead of ボーリング
+* Setup
+- [[https://foosoft.net/projects/anki-connect/index.html#installation][Install AnkiConnect]]
+- Install [[https://github.com/soimort/python-romkan][romkan]]: ~pip3 install romkan~
+- Run Anki
+- Run script: ~python3 AnkiRomajiRemover.py~
+* Use
+For my use case, the command looked like this:
+#+BEGIN_SRC sh
+python3 AnkiRomajiRemover.py "A Frequency of Japanese Words" "Romanization" --written-field-name "Lemma"
+#+END_SRC
+Where ~Lemma~ was the normal written form and ~Romanization~ was the field I wanted to replace romaji with kana.
