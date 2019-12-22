@@ -10,9 +10,6 @@ Some notes:
 - "-" will be removed, however. This is because the romkan converter can get confused by these
 - It doesn't hurt to run the script again on a deck which has already been wholly or partially converted
 
-Issues:
-- [ ] English initialisms, e.g. URL, should output to Katakana, but do not
-- [ ] For my deck, katakana output can differ in regards to continuations: from input "booringu" the converter outputs ボオリング instead of ボーリング
 * Setup
 - [[https://foosoft.net/projects/anki-connect/index.html#installation][Install AnkiConnect]]
 - Install [[https://github.com/soimort/python-romkan][romkan]]: ~pip3 install romkan~
@@ -40,12 +37,14 @@ python3 AnkiRomajiRemover.py "A Frequency of Japanese Words" "Romanization" --wr
 Ideally, you should resolve all warnings and errors before running the script without ~--soft-edit~.
 
 ** Committing the changes
+*Make sure that your decks are Synced and backed up.*
+
 Once you have looked over the changes and decided that you want to make the conversion, run the script *without* ~--soft-edit~. My use case looked like this:
 #+BEGIN_SRC sh
 python3 AnkiRomajiRemover.py "A Frequency of Japanese Words" "Romanization" --written-field-name "Lemma"
 #+END_SRC
 
-*** Create a backup of your decks before running this command!
+*** Create a backup of your decks before running this!
 I am not responsible for damage to your decks. Use this script at your own risk.
 * Error Handling
 Errors sometimes occur in the romaji input, and in conversion. For example:
@@ -64,7 +63,22 @@ If there is a written field name, I use a few techniques to resolve these errors
 For my dataset, the script found notes with missing fields. It will error like so:
 #+BEGIN_SRC sh
 Error: Empty 'Romanization' found in the following note, which may be malformed:
-{'noteId': 1534968932931, 'tags': [], 'fields': {'Rank': {'value': '3541', 'order': 0}, 'Lemma': {'value': '親友shin’yuu', 'order': 1}, 'Mnemonic Lemma/Kanji': {'value': '', 'order': 2}, 'Romanization': {'value': '', 'order': 3}, 'Mnemonic Pronounciation': {'value': '', 'order': 4}, 'Part of Speech': {'value': 'n.', 'order': 5}, 'English Gloss': {'value': 'best friend, close friend', 'order': 6}, 'Illustrative Example': {'value': '二十年来の親友の結婚式に出席した。', 'order': 7}, 'Illustrative Example Translation': {'value': 'I attended the wedding of my best friend of twenty years.', 'order': 8}, 'Illustrative Example Pronounciation': {'value': '', 'order': 9}, 'Illustrative Example 2': {'value': '', 'order': 10}, 'Illustrative Example 2 Translation': {'value': '', 'order': 11}, 'Illustrative Example 2 Pronounciation': {'value': '', 'order': 12}}, 'modelName': 'A Frequency Dictionary of Japanese Words', 'cards': [1534968945014, 1534968945015]}
+{'noteId': 1534968932931, 'tags': [], 
+'fields': {
+'Rank': {'value': '3541', 'order': 0}, 
+'Lemma': {'value': '親友shin’yuu', 'order': 1}, 
+'Mnemonic Lemma/Kanji': {'value': '', 'order': 2}, 
+'Romanization': {'value': '', 'order': 3}, 
+'Mnemonic Pronounciation': {'value': '', 'order': 4}, 
+'Part of Speech': {'value': 'n.', 'order': 5}, 
+'English Gloss': {'value': 'best friend, close friend', 'order': 6}, 
+'Illustrative Example': {'value': '二十年来の親友の結婚式に出席した。', 'order': 7}, 
+'Illustrative Example Translation': {'value': 'I attended the wedding of my best friend of twenty years.', 'order': 8}, 
+'Illustrative Example Pronounciation': {'value': '', 'order': 9}, 
+'Illustrative Example 2': {'value': '', 'order': 10}, 
+'Illustrative Example 2 Translation': {'value': '', 'order': 11}, 
+'Illustrative Example 2 Pronounciation': {'value': '', 'order': 12}}, 
+'modelName': 'A Frequency Dictionary of Japanese Words', 'cards': [1534968945014, 1534968945015]}
 #+END_SRC
 
 As you can see, it is a valid error: the ~Romanization~ field appears to have been merged with the ~Lemma~ field. I will need to fix that note by hand before conversion will work on it. 

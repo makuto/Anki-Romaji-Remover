@@ -7,7 +7,6 @@ import sys
 import urllib.request
 import UnicodeHelpers
 
-
 argParser = argparse.ArgumentParser(
     description="""Automatically turn Romaji into Hiragana in an Anki deck.
 
@@ -64,7 +63,7 @@ def getNotes(deckName):
 
 def sanitizeTextForConversion(fieldValue):
     # These confuse romkan, and aren't usually a part of the language anyhow
-    return fieldValue.replace('-', '').replace('’', '')
+    return fieldValue.replace('-', '').replace('’', ' ')
 
 def convertNotes(deckName, fieldToConvert, conversionHintField=None,
                  shouldEdit=True):
@@ -143,7 +142,22 @@ def convertNotes(deckName, fieldToConvert, conversionHintField=None,
                 print("Could not use edict to find reading because written field not provided")
             else:
                 print("Falling back to edict for {}".format(hint))
-                entries = EDictTools.findEntries(hint)
+                hintSanitizedForDictLookup = hint.strip()
+
+                # Remove suru if it's a verbified noun so we can find it in the dictionary
+                suruRemoved = False
+                # Some wacky character stuff here
+                if "(する）" in hint:
+                    hintSanitizedForDictLookup = hint[:hint.find("(する）")].strip()
+                    suruRemoved = True
+                elif "（する）" in hint:
+                    hintSanitizedForDictLookup = hint[:hint.find("（する）")].strip()
+                    suruRemoved = True
+                if suruRemoved:
+                    print("Note: removing '(する)' from hint for dictionary lookup. Now {}"
+                          .format(hintSanitizedForDictLookup))
+
+                entries = EDictTools.findEntries(hintSanitizedForDictLookup)
                 if args.debugVerbose:
                     for entry in entries:
                         print(entry)
@@ -153,6 +167,7 @@ def convertNotes(deckName, fieldToConvert, conversionHintField=None,
                         print("Warning: multiple entries found:")
                         for entry in entries:
                             print("\t{}".format(entry))
+                        print("You may want to edit this note by hand afterwards to select the proper reading.")
                         # Pick the first one for now
                         convertedText = entries[0].reading
                         suspiciousConversion = True
@@ -160,6 +175,10 @@ def convertNotes(deckName, fieldToConvert, conversionHintField=None,
                         print("Using Edict reading: {}".format(entries[0].reading))
                         convertedText = entries[0].reading
                         suspiciousConversion = False
+
+                    if suruRemoved:
+                        # Add it back
+                        convertedText += '(する)'
                 else:
                     hasWarnings = True
                     print("No readings found for {}".format(hint))
@@ -187,6 +206,10 @@ def convertNotes(deckName, fieldToConvert, conversionHintField=None,
             # Already converted
             if textToConvert == convertedText:
                 continue
+
+            # Commit the conversion
+            noteFieldUpdate = {"id": currentNote['noteId'], "fields": {fieldToConvert: convertedText}}
+            invokeAnkiConnect("updateNoteFields", note = noteFieldUpdate)
 
 if __name__ == '__main__':
     print('Anki Romaji Remover: Convert Romaji into Hiragana')
