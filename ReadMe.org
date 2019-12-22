@@ -17,10 +17,62 @@ Issues:
 - [[https://foosoft.net/projects/anki-connect/index.html#installation][Install AnkiConnect]]
 - Install [[https://github.com/soimort/python-romkan][romkan]]: ~pip3 install romkan~
 - Run Anki
-- Run script: ~python3 AnkiRomajiRemover.py~
 * Use
+** Previewing changes
+It is recommended to first run a "soft edit" of the deck. This will output what the script will change each Note to, but *will not go through with the edit*.
 For my use case, the command looked like this:
+#+BEGIN_SRC sh
+python3 AnkiRomajiRemover.py "A Frequency of Japanese Words" "Romanization" --written-field-name "Lemma" --soft-edit
+#+END_SRC
+Where ~Lemma~ was the normal written form and ~Romanization~ was the field I wanted to replace romaji with kana.
+
+This will output a list of all conversions, as well as any warnings or errors encountered. See "Error Handling" for more details on errors. Here is an example of a successful conversion:
+#+BEGIN_SRC sh
+yokan(suru)     -> よかん(する)         (hint '予感（する）')
+#+END_SRC
+This says that it will change the "Romanization" field of that note from "yokan(suru)" to "よかん(する)". The hint provided by the written field name "Lemma" is provided for additional verification.
+
+If there were warnings or errors, I can output only those, for ease of reading (i.e don't output straightforward/successful conversions):
+#+BEGIN_SRC sh
+python3 AnkiRomajiRemover.py "A Frequency of Japanese Words" "Romanization" --written-field-name "Lemma" --soft-edit --only-warnings
+#+END_SRC
+
+Ideally, you should resolve all warnings and errors before running the script without ~--soft-edit~.
+
+** Committing the changes
+Once you have looked over the changes and decided that you want to make the conversion, run the script *without* ~--soft-edit~. My use case looked like this:
 #+BEGIN_SRC sh
 python3 AnkiRomajiRemover.py "A Frequency of Japanese Words" "Romanization" --written-field-name "Lemma"
 #+END_SRC
-Where ~Lemma~ was the normal written form and ~Romanization~ was the field I wanted to replace romaji with kana.
+
+*** Create a backup of your decks before running this command!
+I am not responsible for damage to your decks. Use this script at your own risk.
+* Error Handling
+Errors sometimes occur in the romaji input, and in conversion. For example:
+- Romaji may not be convertable correctly by romkan: 'matchi(suru)' outputs 'まtち(する)' (the actual field should be 'マッチ（する）', but the 't' is especially problematic in the all-hiragana version)
+- From input "booringu" the converter outputs ボオリング instead of ボーリング
+
+** Resolving error with ~--written-field-name~ hint
+Without a ~--written-field-name~ (aka "hint field"), there isn't much I can do to fix errors. This is because the script doesn't know what the actual word you are trying to convert the reading for is.
+
+If there is a written field name, I use a few techniques to resolve these errors:
+- If the hint field does not have any kanji, just use the hint field. It's already readable in its hiragana, katakana, or mixed hiragana-katakana (e.g. verb-ified loan word) representation. Both of the previously mentioned errors would be resolved this way
+- If the hint field contains kanji, use [[http://edrdg.org/jmdict/edict.html][EDict]] to look up the hint's reading
+- Finally, if there was anything strange about the error resolution, include the romaji in the field so that the user may decide how to resolve the error
+
+** Malformed notes
+For my dataset, the script found notes with missing fields. It will error like so:
+#+BEGIN_SRC sh
+Error: Empty 'Romanization' found in the following note, which may be malformed:
+{'noteId': 1534968932931, 'tags': [], 'fields': {'Rank': {'value': '3541', 'order': 0}, 'Lemma': {'value': '親友shin’yuu', 'order': 1}, 'Mnemonic Lemma/Kanji': {'value': '', 'order': 2}, 'Romanization': {'value': '', 'order': 3}, 'Mnemonic Pronounciation': {'value': '', 'order': 4}, 'Part of Speech': {'value': 'n.', 'order': 5}, 'English Gloss': {'value': 'best friend, close friend', 'order': 6}, 'Illustrative Example': {'value': '二十年来の親友の結婚式に出席した。', 'order': 7}, 'Illustrative Example Translation': {'value': 'I attended the wedding of my best friend of twenty years.', 'order': 8}, 'Illustrative Example Pronounciation': {'value': '', 'order': 9}, 'Illustrative Example 2': {'value': '', 'order': 10}, 'Illustrative Example 2 Translation': {'value': '', 'order': 11}, 'Illustrative Example 2 Pronounciation': {'value': '', 'order': 12}}, 'modelName': 'A Frequency Dictionary of Japanese Words', 'cards': [1534968945014, 1534968945015]}
+#+END_SRC
+
+As you can see, it is a valid error: the ~Romanization~ field appears to have been merged with the ~Lemma~ field. I will need to fix that note by hand before conversion will work on it. 
+
+** Fixing notes by hand
+As an example, here is how I would fix the ~Empty 'Romanization' found~ error in the previous section:
+- Open Anki
+- Click *Browse*
+- Click the deck in the list on the left with the erroneous card
+- Search some text in the card to find it. In this case "best friend" will get me to the card
+- Look over the fields and change them to correct the error. In this case, I will cut "shin’yuu" from the ~Lemma~ field and paste it into the ~Romanization~ field

@@ -1,15 +1,17 @@
 # -*- coding:utf-8 -*-
 
-# From
+# Modified by Macoy Madson. Original copied from
 # https://stackoverflow.com/questions/30069846/how-to-find-out-chinese-or-japanese-character-in-a-string-in-python
 
-ranges = [
+hiraganaRange = {'from': ord(u'\u3040'), 'to': ord(u'\u309f')} # Japanese Hiragana
+katakanaRange = {"from": ord(u"\u30a0"), "to": ord(u"\u30ff")} # Japanese Katakana
+
+# Specifically ignore Hiragana and Katakana in order to get all Kanji
+cjkNonKanaRanges = [
   {"from": ord(u"\u3300"), "to": ord(u"\u33ff")},         # compatibility ideographs
   {"from": ord(u"\ufe30"), "to": ord(u"\ufe4f")},         # compatibility ideographs
   {"from": ord(u"\uf900"), "to": ord(u"\ufaff")},         # compatibility ideographs
   {"from": ord(u"\U0002F800"), "to": ord(u"\U0002fa1f")}, # compatibility ideographs
-  {'from': ord(u'\u3040'), 'to': ord(u'\u309f')},         # Japanese Hiragana
-  {"from": ord(u"\u30a0"), "to": ord(u"\u30ff")},         # Japanese Katakana
   {"from": ord(u"\u2e80"), "to": ord(u"\u2eff")},         # cjk radicals supplement
   {"from": ord(u"\u4e00"), "to": ord(u"\u9fff")},
   {"from": ord(u"\u3400"), "to": ord(u"\u4dbf")},
@@ -19,7 +21,9 @@ ranges = [
   {"from": ord(u"\U0002b820"), "to": ord(u"\U0002ceaf")}  # included as of Unicode 8.0
 ]
 
-katakanaRange = {"from": ord(u"\u30a0"), "to": ord(u"\u30ff")} # Japanese Katakana
+cjkRanges = cjkNonKanaRanges.copy()
+cjkRanges.append(hiraganaRange)         # Japanese Hiragana
+cjkRanges.append(katakanaRange)         # Japanese Katakana
 
 # "The Alphabet"
 latinRanges = [
@@ -29,10 +33,17 @@ latinRanges = [
   
 
 def is_cjk(char):
-  return any([range["from"] <= ord(char) <= range["to"] for range in ranges])
+  return any([range["from"] <= ord(char) <= range["to"] for range in cjkRanges])
 
 def is_katakana(char):
   return katakanaRange["from"] <= ord(char) <= katakanaRange["to"]
+
+def is_hiragana(char):
+  return hiraganaRange["from"] <= ord(char) <= hiraganaRange["to"]
+
+# This includes Chinese and Korean. This excludes hiragana and katakana
+def is_kanji(char):
+  return any([range["from"] <= ord(char) <= range["to"] for range in cjkNonKanaRanges])
 
 def is_latin(char):
   return any([range["from"] <= ord(char) <= range["to"] for range in latinRanges])
